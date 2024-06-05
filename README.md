@@ -1,6 +1,8 @@
+<div align="center">
+
 # React CRUD Application with Material Table and Theming
 
----
+## </div>
 
 ![Image Alt Text](public/Preview1.png)
 
