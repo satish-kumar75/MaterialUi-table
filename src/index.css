@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body,
+html {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.loading {
+  display: flex;
+  height: 100vh;
+  justify-content: center;
+  align-items: center;
+}
+
+
+
+.loading p {
+  text-align: center;
+}
+
+.container h1 {
+  padding-bottom: 5px;
+  text-align: center;
+}
+
+.container div p {
+  text-align: center;
+  letter-spacing: 3px;
+}
+
+.inner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+.inner-container span {
+  height: 1px;
+  width: 300px;
+  background-color: silver;
+}
+
+.user-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.user-container div {
+  border-radius: 5px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+
+.inner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.MuiButtonBase-root[title="Delete"] .MuiIconButton-label .material-icons {
+  color: red;
+}
+
+
+@media screen and (max-width:480px) {
+  .inner-container span {
+    display: none;
+  }
+
+  .user-container {
+    width: 100%;
+  }
+}
