@@ -2,30 +2,38 @@ import React, { useState, useEffect } from "react";
 import UserTable from "./components/UserTable";
 import { Toaster } from "react-hot-toast";
 import Switcher from "./components/Switcher";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "./utils/firebase";
 
 function App() {
   const [users, setUsers] = useState([]);
 
-  useEffect(() => {
-    const fetchUsersData = async () => {
-      const response = await fetch(
-        "https://jsonplaceholder.typicode.com/users"
-      );
-      const users = await response.json();
-      setUsers(users);
-    };
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp.seconds * 1000);
+    return date.toLocaleDateString("en-US");
+  };
 
-    fetchUsersData();
+  useEffect(() => {
+    const fetchData = async () => {
+      const querySnapshot = await getDocs(collection(db, "pandetails"));
+      const firebaseData = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          dob: formatDate(data.dob),
+        };
+      });
+      setUsers(firebaseData);
+    };
+    fetchData();
   }, []);
 
   return (
     <div className="container w-full min-h-screen bg-white dark:bg-[#424242] text-black dark:text-white transition duration-300">
-      <h1 className="font-medium text-2xl mb-2 sm:text-4xl">React-App</h1>
-      <div className="inner-container">
-        <span></span>
-        <p className="font-medium text-base sm:text-lg">CRUD Operation with Material Table</p>
-        <span></span>
-      </div>
+      <h1 className="font-medium text-2xl mb-2 sm:text-4xl font-serif tracking-widest">
+        Pan Card Details
+      </h1>
       <UserTable users={users} setUsers={setUsers} />
       <Toaster position="top-center" />
       <Switcher />

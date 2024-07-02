@@ -1,15 +1,16 @@
 import React, { useContext } from "react";
 import MaterialTable from "material-table";
 import toast from "react-hot-toast";
-import UserTableActions from "./UserTableActions";
-import {
-  validateName,
-  validateEmail,
-  validatePhone,
-  validateWebsite,
-} from "./Validation";
 import ThemeContext from "../context/ThemeContext";
 import { ThemeProvider, createMuiTheme } from "@material-ui/core";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+import { db } from "../utils/firebase";
 
 function UserTable({ users, setUsers }) {
   const { currentTheme } = useContext(ThemeContext);
@@ -25,38 +26,20 @@ function UserTable({ users, setUsers }) {
       fontSize: "1.5rem",
     },
   };
+
   const columns = [
-    {
-      title: "ID",
-      field: "id",
-      editable: "never",
-    },
-    {
-      title: "Name",
-      field: "name",
-      validate: validateName,
-    },
-    {
-      title: "Email",
-      field: "email",
-      validate: validateEmail,
-    },
-    {
-      title: "Phone",
-      field: "phone",
-      validate: validatePhone,
-    },
-    {
-      title: "Website",
-      field: "website",
-      validate: validateWebsite,
-    },
-    {
-      title: "Actions",
-      field: "actions",
-      render: (rowData) => <UserTableActions rowData={rowData} />,
-    },
+    { title: "ID", field: "customId", editable: "never" },
+    { title: "Name", field: "name" },
+    { title: "Mobile", field: "mobile" },
+    { title: "Coupon", field: "coupon" },
+    { title: "DOB", field: "dob", type: "date" },
   ];
+
+  const getNextId = () => {
+    if (users.length === 0) return 1;
+    const ids = users.map((user) => user.customId);
+    return Math.max(...ids) + 1;
+  };
 
   return (
     <div>
@@ -67,55 +50,50 @@ function UserTable({ users, setUsers }) {
           columns={columns}
           editable={{
             onRowAdd: (newRow) =>
-              new Promise((resolve, reject) => {
-                const validationResults = columns.map((column) =>
-                  column.validate ? column.validate(newRow) : true
-                );
-                const hasError = validationResults.some(
-                  (result) => result !== true
-                );
-                if (!hasError) {
-                  const newId =
-                    users.length > 0 ? users[users.length - 1].id + 1 : 1; // Generate a new unique ID
-                  const updatedRows = [...users, { id: newId, ...newRow }];
-                  setTimeout(() => {
-                    setUsers(updatedRows);
-                    toast.success("Row added successfully");
-                    resolve();
-                  }, 1000);
-                } else {
+              new Promise(async (resolve, reject) => {
+                try {
+                  const customId = getNextId();
+                  const newUser = { ...newRow, customId };
+                  const docRef = await addDoc(
+                    collection(db, "pandetails"),
+                    newUser
+                  );
+                  setUsers([...users, { id: docRef.id, ...newUser }]);
+                  toast.success("Row added successfully");
+                  resolve();
+                } catch (error) {
+                  toast.error("Error adding row");
                   reject();
                 }
               }),
             onRowDelete: (selectedRow) =>
-              new Promise((resolve, reject) => {
-                const index = selectedRow.tableData.id;
-                const updatedRows = [...users];
-                updatedRows.splice(index, 1);
-                setTimeout(() => {
+              new Promise(async (resolve, reject) => {
+                try {
+                  await deleteDoc(doc(db, "pandetails", selectedRow.id));
+                  const updatedRows = users.filter(
+                    (user) => user.id !== selectedRow.id
+                  );
                   setUsers(updatedRows);
                   toast.success("Row deleted successfully");
                   resolve();
-                }, 1000);
+                } catch (error) {
+                  toast.error("Error deleting row");
+                  reject();
+                }
               }),
             onRowUpdate: (updatedRow, oldRow) =>
-              new Promise((resolve, reject) => {
-                const validationResults = columns.map((column) =>
-                  column.validate ? column.validate(updatedRow) : true
-                );
-                const hasError = validationResults.some(
-                  (result) => result !== true
-                );
-                if (!hasError) {
-                  const index = oldRow.tableData.id;
-                  const updatedRows = [...users];
-                  updatedRows[index] = updatedRow;
-                  setTimeout(() => {
-                    setUsers(updatedRows);
-                    toast.success("Row updated successfully");
-                    resolve();
-                  }, 1000);
-                } else {
+              new Promise(async (resolve, reject) => {
+                try {
+                  const docRef = doc(db, "pandetails", oldRow.id);
+                  await updateDoc(docRef, updatedRow);
+                  const updatedRows = users.map((user) =>
+                    user.id === oldRow.id ? updatedRow : user
+                  );
+                  setUsers(updatedRows);
+                  toast.success("Row updated successfully");
+                  resolve();
+                } catch (error) {
+                  toast.error("Error updating row");
                   reject();
                 }
               }),
